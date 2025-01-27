@@ -1,9 +1,9 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 
 import 'dart:html' as html; // For web-specific code
-
 
 class QuizComponent extends StatefulWidget {
   const QuizComponent({super.key});
@@ -22,7 +22,7 @@ class _QuizComponentState extends State<QuizComponent> {
     setState(() {
       quizData.add({
         'questionTitle': '',
-        'category':'',
+        'category': '',
         'choices': [],
         'correctAnswer': 0,
       });
@@ -30,31 +30,31 @@ class _QuizComponentState extends State<QuizComponent> {
   }
 
   // Pick image for a choice
-Future<void> pickImage(int questionIndex, int choiceIndex) async {
-  final input = html.FileUploadInputElement()..accept = 'image/*';
-  input.click();
+  Future<void> pickImage(int questionIndex, int choiceIndex) async {
+    final input = html.FileUploadInputElement()..accept = 'image/*';
+    input.click();
 
-  input.onChange.listen((e) async {
-    final files = input.files;
-    if (files?.isEmpty ?? true) return;
-    final file = files?.first;
+    input.onChange.listen((e) async {
+      final files = input.files;
+      if (files?.isEmpty ?? true) return;
+      final file = files?.first;
 
-    if (file != null) {
-      final reader = html.FileReader();
-      reader.readAsArrayBuffer(file); // Read file as bytes
-      reader.onLoadEnd.listen((event) {
-        final fileBytes = reader.result as List<int>;
-        final base64String = base64Encode(fileBytes); // Convert to Base64
+      if (file != null) {
+        final reader = html.FileReader();
+        reader.readAsArrayBuffer(file); // Read file as bytes
+        reader.onLoadEnd.listen((event) {
+          final fileBytes = reader.result as List<int>;
+          final base64String = base64Encode(fileBytes); // Convert to Base64
 
-        // Set the Base64 string to your quiz data
-        setState(() {
-          quizData[questionIndex]['choices'][choiceIndex]['image'] =
-              'data:${file.type};base64,$base64String'; // Include MIME type
+          // Set the Base64 string to your quiz data
+          setState(() {
+            quizData[questionIndex]['choices'][choiceIndex]['image'] =
+                'data:${file.type};base64,$base64String'; // Include MIME type
+          });
         });
-      });
-    }
-  });
-}
+      }
+    });
+  }
 
   // Save or submit quiz data
   void submitQuiz() {
@@ -86,8 +86,7 @@ Future<void> pickImage(int questionIndex, int choiceIndex) async {
                 ),
                 TextField(
                   controller: categoryController,
-                  decoration:
-                      const InputDecoration(labelText: 'Category'),
+                  decoration: const InputDecoration(labelText: 'Category'),
                   onChanged: (value) {
                     quizData[i]['category'] = value;
                   },
@@ -116,10 +115,23 @@ Future<void> pickImage(int questionIndex, int choiceIndex) async {
                         icon: Icon(Icons.delete),
                         onPressed: () {
                           setState(() {
+                            print(
+                                'current Correct Answer: ${quizData[i]['correctAnswer']}');
+                            print(
+                                'before remove quiz choices length : ${quizData[i]['choices'].length}');
+
                             if (quizData[i]['choices'].isNotEmpty) {
                               quizData[i]['choices'].removeAt(
                                   i); // Replace indexToRemove with the index of the choice you want to delete
                             }
+                            if (quizData[i]['correctAnswer'] ==
+                                quizData[i]['choices'].length) {
+                              setState(() {
+                                quizData[i]['correctAnswer'] = 0;
+                              });
+                            }
+                            print(
+                                'after remove quiz correct Answer index : ${quizData[i]['correctAnswer']}');
                           });
                         },
                       ),
@@ -150,6 +162,7 @@ Future<void> pickImage(int questionIndex, int choiceIndex) async {
                   ),
                   onChanged: (value) {
                     setState(() {
+                      print('value correct Answer here $value');
                       quizData[i]['correctAnswer'] = value!;
                     });
                   },
