@@ -9,7 +9,7 @@ class Apiservice {
   static Future<dynamic> createMultipleQuiz(dynamic quizData) async {
     try {
       final url = Uri.parse('$baseUrl/api/upload-quiz');
-      print(jsonEncode(quizData));
+      // print(jsonEncode(quizData));
       final response = await http.post(url,
           headers: {'Content-type': 'application/json'},
           body: jsonEncode({'author': 'jomar', 'question': quizData}));
