@@ -1,22 +1,16 @@
-import 'package:admission/pages/Quiz.dart';
-import 'package:admission/pages/homepage.dart';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
+import 'package:shared_preferences/shared_preferences.dart';
+import './pages/homepage.dart';
+import './pages/Login.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString("jwt_token");
+
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: token != null ? HomeScreen() : LoginScreen(),
+  ));
 }
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: const Homepage(),
-    );
-  }
-}
-
-
-
-
