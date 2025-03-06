@@ -6,7 +6,6 @@ import 'package:admission/services/authService.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -21,20 +20,24 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     loadUserInfo();
   }
+
   final List<Widget> _dashboard = [
     Padding(
-      padding: const EdgeInsets.only(bottom: 0,left: 50,right: 10,top: 10),
-      child:  Center(child: ResponsiveContainers()),
+      padding: const EdgeInsets.only(bottom: 0, left: 50, right: 10, top: 10),
+      child: Center(child: ResponsiveContainers()),
     ),
     Padding(
-      padding: const EdgeInsets.only(bottom: 0,left: 50,right: 10,top: 10),
-      child: Center(child: Schedule(),),
+      padding: const EdgeInsets.only(bottom: 0, left: 50, right: 10, top: 10),
+      child: Center(
+        child: Schedule(),
+      ),
     ),
     Padding(
-      padding: const EdgeInsets.only(bottom: 0,left: 50,right: 10,top: 10),
-      child: Center(child: AdmissionState(),),
+      padding: const EdgeInsets.only(bottom: 0, left: 50, right: 10, top: 10),
+      child: Center(
+        child: AdmissionState(),
+      ),
     ),
-    
   ];
   void _onItemSelected(int index) {
     setState(() {
@@ -58,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
         fullName = "User not found";
         userID = 0;
       });
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
@@ -78,7 +82,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Icon(Icons.person, size: 50, color: Colors.blue),
               ),
             ),
-            
             ListTile(
               leading: Icon(Icons.dashboard),
               title: Text('Dashboard'),
@@ -119,14 +122,16 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: Icon(Icons.logout),
               title: Text('Logout'),
               onTap: () {
-                final authService = AuthService().logout();
+                AuthService().logout();
+                Navigator.pop(context);
                 Navigator.pushReplacementNamed(context, '/login');
               },
             ),
           ],
         ),
       ),
-      body: Center(child: _dashboard[_selectedIndex],
+      body: Center(
+        child: _dashboard[_selectedIndex],
       ),
     );
   }

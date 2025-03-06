@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Import for date formatting
+import 'package:intl/intl.dart';
 
 class NewStudentTable extends StatefulWidget {
   final List<dynamic> studentData;
   final Function(List<int>) onDeleteSelected;
   final Function(List<int>, DateTime) onScheduleSelected;
+  final List<Map<String, dynamic>> availableScheduleDates; // Modified type
 
   const NewStudentTable({
     Key? key,
     required this.studentData,
     required this.onDeleteSelected,
     required this.onScheduleSelected,
+    required this.availableScheduleDates,
   }) : super(key: key);
 
   @override
@@ -50,36 +52,71 @@ class _NewStudentTableState extends State<NewStudentTable> {
     }
   }
 
-  Future<void> _selectDateTime(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
+  Future<void> _selectDate(BuildContext context) async {
+    return showDialog<void>(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select a Date'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: widget.availableScheduleDates.map((slot) { // Modified to slot
+                DateTime date = DateTime.parse(slot['dateTime']);
+                return ListTile(
+                  title: Text(DateFormat('yyyy-MM-dd HH:mm').format(date)),
+                  subtitle: Text('${slot['location']} - ${slot['description']}'), // Display location and description
+                  onTap: () {
+                    setState(() {
+                      _selectedDateTime = date;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
     );
-    if (pickedDate != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-      if (pickedTime != null) {
-        setState(() {
-          _selectedDateTime = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-        });
-      }
-    }
   }
-
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 100,top: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  if (_selectedIds.isNotEmpty) {
+                    widget.onDeleteSelected(_selectedIds);
+                  }
+                },
+                child: const Text('Delete Selected'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await _selectDate(context); // Changed to _selectDate
+                  if (_selectedIds.isNotEmpty && _selectedDateTime != null) {
+                    // widget.onScheduleSelected(_selectedIds, _selectedDateTime!);
+                    print('Scheduled IDs: $_selectedIds at $_selectedDateTime');
+                  }
+                },
+                child: const Text('Schedule'),
+              ),
+            ],
+          ),
+        ),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
@@ -88,7 +125,10 @@ class _NewStudentTableState extends State<NewStudentTable> {
               DataColumn(label: Text('Student ID')),
               DataColumn(label: Text('Name')),
               DataColumn(label: Text('Email')),
-              DataColumn(label: Text('SHS')),
+              DataColumn(label: Text('Senior HighSchool')),
+              DataColumn(label: Text('School Type')),
+              DataColumn(label: Text('Year Graudated')),
+              DataColumn(label: Text('Awards')),
               DataColumn(label: Text('Actions')),
             ],
             rows: widget.studentData.asMap().entries.map((entry) {
@@ -109,6 +149,9 @@ class _NewStudentTableState extends State<NewStudentTable> {
                   DataCell(Text('${student['firstName']} ${student['lastName']}')),
                   DataCell(Text(student['email'])),
                   DataCell(Text(student['shs'])),
+                  DataCell(Text(student['schoolType'])),
+                  DataCell(Text(student['yearGraduated'])),
+                  DataCell(Text(student['awardsReceived'])),
                   DataCell(
                     Row(
                       children: [
@@ -132,29 +175,7 @@ class _NewStudentTableState extends State<NewStudentTable> {
             }).toList(),
           ),
         ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                if (_selectedIds.isNotEmpty) {
-                  widget.onDeleteSelected(_selectedIds);
-                }
-              },
-              child: const Text('Delete Selected'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                await _selectDateTime(context);
-                if (_selectedIds.isNotEmpty && _selectedDateTime != null) {
-                  widget.onScheduleSelected(_selectedIds, _selectedDateTime!);
-                  print('Scheduled IDs: $_selectedIds at $_selectedDateTime');
-                }
-              },
-              child: const Text('Schedule'),
-            ),
-          ],
-        ),
+        
       ],
     );
   }

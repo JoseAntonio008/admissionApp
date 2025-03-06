@@ -1,9 +1,6 @@
 import 'package:admission/components/dataTable.dart';
 import 'package:admission/services/apiservice.dart';
 import 'package:flutter/material.dart';
-
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 class Admission extends StatelessWidget {
@@ -26,6 +23,7 @@ class _AdmissionStateState extends State<AdmissionState>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<dynamic> _studentData = [];
+  List<Map<String, dynamic>> _availableScheduleDates = []; // Modified type
 
   @override
   void initState() {
@@ -37,8 +35,15 @@ class _AdmissionStateState extends State<AdmissionState>
   Future<void> _fetchStudentData() async {
     final response = await Apiservice.fetchNew();
     print(response['data']);
+
+    List<Map<String, dynamic>> availableSlots = [];
+    if (response['availableSlots'] != null) {
+      availableSlots = List<Map<String, dynamic>>.from(response['availableSlots']); // convert to list of maps
+    }
+
     setState(() {
       _studentData = response['data'];
+      _availableScheduleDates = availableSlots; // Update available dates
     });
   }
 
@@ -67,9 +72,9 @@ class _AdmissionStateState extends State<AdmissionState>
           controller: _tabController,
           tabs: const [
             Tab(text: 'New Student'),
-            Tab(text: 'Tab 2'),
-            Tab(text: 'Tab 3'),
-            Tab(text: 'Tab 4'),
+            Tab(text: 'Transferee Student'),
+            Tab(text: 'Returning Student'),
+            Tab(text: '2nd Degree Taker'),
           ],
         ),
       ),
@@ -80,6 +85,7 @@ class _AdmissionStateState extends State<AdmissionState>
             studentData: _studentData,
             onDeleteSelected: _deleteSelected,
             onScheduleSelected: _scheduleSelected,
+            availableScheduleDates: _availableScheduleDates, // Pass the dates
           ),
           const Center(child: Text('Content of Tab 2')),
           const Center(child: Text('Content of Tab 3')),

@@ -93,7 +93,8 @@ class Apiservice {
       if (message['data']==null) {
         return message['message'];
       }
-      return {'message':message['message'],'data':message['data']};
+      print(message);
+      return {'message':message['message'],'data':message['data'],'availableSlots':message['availableSlots']};
     } catch (e) {
       return e.toString();
     }

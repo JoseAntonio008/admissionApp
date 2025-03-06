@@ -1,5 +1,6 @@
 import 'package:admission/components/Toast.dart';
 import 'package:admission/services/apiservice.dart';
+import 'package:admission/services/authService.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,6 +17,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    loadToken();
+  }
+
+  Future<void> loadToken() async{
+    AuthService authService = AuthService();
+    Map<String, dynamic>? decodedToken = await authService.getDecodedToken();
+    if (decodedToken == null) {
+      print("empty token");
+    }else{
+      Navigator.pushReplacementNamed(context, '/home');
+    }
+  }
+
   Future<void> _login() async {
     setState(() => _isLoading = true);
     try {
@@ -31,8 +48,8 @@ class _LoginScreenState extends State<LoginScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString("jwt_token", token);
         print("Token stored in SharedPreferences: $token");
-        Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (_) => HomeScreen()));
+        Navigator.pushReplacementNamed(context, '/home');
+
       }
       
       Toast.show(context, message: response['message'],backgroundColor: Colors.orange);
