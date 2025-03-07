@@ -3,14 +3,14 @@ import 'package:admission/services/apiservice.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class NewStudentTable extends StatefulWidget {
+class RetruningTable extends StatefulWidget {
   final List<dynamic> studentData;
   final Function(List<int>) onDeleteSelected;
   final Function(List<int>, DateTime) onScheduleSelected;
   final List<Map<String, dynamic>> availableScheduleDates; // Modified type
   final Function() onFetchData;
 
-  const NewStudentTable({
+  const RetruningTable({
     Key? key,
     required this.studentData,
     required this.onDeleteSelected,
@@ -20,10 +20,10 @@ class NewStudentTable extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _NewStudentTableState createState() => _NewStudentTableState();
+  RetruningTableState createState() => RetruningTableState();
 }
 
-class _NewStudentTableState extends State<NewStudentTable> {
+class RetruningTableState extends State<RetruningTable> {
   List<bool> _selectedRows = [];
   List<int> _selectedIds = [];
   DateTime? _selectedDateTime;
@@ -35,7 +35,7 @@ class _NewStudentTableState extends State<NewStudentTable> {
   }
 
   @override
-  void didUpdateWidget(NewStudentTable oldWidget) {
+  void didUpdateWidget(RetruningTable oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.studentData != widget.studentData) {
       _initializeSelectedRows();
@@ -96,50 +96,50 @@ class _NewStudentTableState extends State<NewStudentTable> {
     double screenWidth = MediaQuery.of(context).size.width;
     return Column(
       children: [
-        Padding(
-          padding:  EdgeInsets.only(right:20,top: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  if (_selectedIds.isNotEmpty) {
-                    widget.onDeleteSelected(_selectedIds);
-                  }
-                },
-                child: const Text('Delete Selected'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  await _selectDate(context); // Changed to _selectDate
-                  if (_selectedIds.isNotEmpty && _selectedDateTime != null) {
-                    // widget.onScheduleSelected(_selectedIds, _selectedDateTime!);
-                    print('Scheduled IDs: $_selectedIds at $_selectedDateTime');
-                    try {
-                      final response = await Apiservice.approveNew(_selectedIds,_selectedDateTime);
-                      Toast.show(context, message: response['message'],backgroundColor: Colors.green);
-                      widget.onFetchData();
-                    } catch (e) {
-                      print(e.toString());
-                      Toast.show(context, message: e.toString(),backgroundColor: Colors.red);
-                    }
-                  }
-                },
-                child: const Text('Schedule'),
-              ),
-              // ElevatedButton(
-              //   onPressed: () async {
+        // Padding(
+        //   padding:  EdgeInsets.only(right:20,top: 10),
+        //   child: Row(
+        //     mainAxisAlignment: MainAxisAlignment.end,
+        //     children: [
+        //       ElevatedButton(
+        //         onPressed: () {
+        //           if (_selectedIds.isNotEmpty) {
+        //             widget.onDeleteSelected(_selectedIds);
+        //           }
+        //         },
+        //         child: const Text('Delete Selected'),
+        //       ),
+        //       ElevatedButton(
+        //         onPressed: () async {
+        //           await _selectDate(context); // Changed to _selectDate
+        //           if (_selectedIds.isNotEmpty && _selectedDateTime != null) {
+        //             // widget.onScheduleSelected(_selectedIds, _selectedDateTime!);
+        //             print('Scheduled IDs: $_selectedIds at $_selectedDateTime');
+        //             try {
+        //               final response = await Apiservice.approveSecond(_selectedIds,_selectedDateTime);
+        //               Toast.show(context, message: response['message'],backgroundColor: Colors.green);
+        //               widget.onFetchData();
+        //             } catch (e) {
+        //               print(e.toString());
+        //               Toast.show(context, message: e.toString(),backgroundColor: Colors.red);
+        //             }
+        //           }
+        //         },
+        //         child: const Text('Schedule'),
+        //       ),
+        //       // ElevatedButton(
+        //       //   onPressed: () async {
                   
-              //     if (_selectedIds.isNotEmpty ) {
-              //       // widget.onScheduleSelected(_selectedIds, _selectedDateTime!);
-              //       print('approve IDs: $_selectedIds');
-              //     }
-              //   },
-              //   child: const Text('Approve'),
-              // ),
-            ],
-          ),
-        ),
+        //       //     if (_selectedIds.isNotEmpty ) {
+        //       //       // widget.onScheduleSelected(_selectedIds, _selectedDateTime!);
+        //       //       print('approve IDs: $_selectedIds');
+        //       //     }
+        //       //   },
+        //       //   child: const Text('Approve'),
+        //       // ),
+        //     ],
+        //   ),
+        // ),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Scrollbar(
@@ -151,10 +151,7 @@ class _NewStudentTableState extends State<NewStudentTable> {
               DataColumn(label: Text('Student ID')),
               DataColumn(label: Text('Name')),
               DataColumn(label: Text('Email')),
-              DataColumn(label: Text('Senior HighSchool')),
-              DataColumn(label: Text('School Type')),
-              DataColumn(label: Text('Year Graudated')),
-              DataColumn(label: Text('Awards')),
+              
               // DataColumn(label: Text('Actions')),
             ],
             rows: widget.studentData.asMap().entries.map((entry) {
@@ -174,10 +171,7 @@ class _NewStudentTableState extends State<NewStudentTable> {
                   DataCell(Text(student['id'].toString())),
                   DataCell(Text('${student['firstName']} ${student['lastName']}')),
                   DataCell(Text(student['email'])),
-                  DataCell(Text(student['shs'])),
-                  DataCell(Text(student['schoolType'])),
-                  DataCell(Text(student['yearGraduated'])),
-                  DataCell(Text(student['awardsReceived'])),
+                  
                   // DataCell(
                   //   Row(
                   //     children: [

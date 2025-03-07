@@ -8,11 +8,13 @@ class ResponsiveContainers extends StatefulWidget {
 
 class _ResponsiveContainersState extends State<ResponsiveContainers> {
   late Future<dynamic> _totalApplicantsFuture;
+  late Future<dynamic> _totalSchedulesFuture;
 
   @override
   void initState() {
     super.initState();
     _totalApplicantsFuture = Apiservice.fetchTotalApplicants();
+    _totalSchedulesFuture = Apiservice.fetchTotalSchedules();
   }
 
   @override
@@ -46,16 +48,30 @@ class _ResponsiveContainersState extends State<ResponsiveContainers> {
                   ),
                   SizedBox(
                       width: constraints.maxWidth > 200 ? 10 : 0), // conditional SizedBox
-                  buildContainer(context, constraints, 'Scheduled Exams', '200'),
+                  FutureBuilder<dynamic>(
+                    future: _totalSchedulesFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return buildContainer(
+                            context, constraints, 'No Of Schedules', 'Loading...');
+                      } else if (snapshot.hasError) {
+                        return buildContainer(
+                            context, constraints, 'No Of Schedules', 'Error');
+                      } else {
+                        return buildContainer(
+                            context, constraints, 'No Of Schedules', snapshot.data.toString());
+                      }
+                    },
+                  ),
                   SizedBox(
                       width: constraints.maxWidth > 200 ? 10 : 0), // conditional SizedBox
-                  buildContainer(context, constraints, 'Exam Results', '300'),
+                  buildContainer(context, constraints, 'Exam Results', 'N/A'),
                   SizedBox(
                       width: constraints.maxWidth > 200 ? 10 : 0), // conditional SizedBox
-                  buildContainer(context, constraints, 'Upcoming Exams', '300'),
+                  buildContainer(context, constraints, 'Upcoming Exams', 'N/A'),
                   SizedBox(
                       width: constraints.maxWidth > 200 ? 10 : 0), // conditional SizedBox
-                  buildContainer(context, constraints, 'Recent Exam Results', '300'),
+                  buildContainer(context, constraints, 'Recent Exam Results', 'N/A'),
                 ],
               ),
             ),

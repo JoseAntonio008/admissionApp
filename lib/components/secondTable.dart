@@ -3,14 +3,14 @@ import 'package:admission/services/apiservice.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class NewStudentTable extends StatefulWidget {
+class SecondTable extends StatefulWidget {
   final List<dynamic> studentData;
   final Function(List<int>) onDeleteSelected;
   final Function(List<int>, DateTime) onScheduleSelected;
   final List<Map<String, dynamic>> availableScheduleDates; // Modified type
   final Function() onFetchData;
 
-  const NewStudentTable({
+  const SecondTable({
     Key? key,
     required this.studentData,
     required this.onDeleteSelected,
@@ -20,10 +20,10 @@ class NewStudentTable extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _NewStudentTableState createState() => _NewStudentTableState();
+  SecondTableState createState() => SecondTableState();
 }
 
-class _NewStudentTableState extends State<NewStudentTable> {
+class SecondTableState extends State<SecondTable> {
   List<bool> _selectedRows = [];
   List<int> _selectedIds = [];
   DateTime? _selectedDateTime;
@@ -35,7 +35,7 @@ class _NewStudentTableState extends State<NewStudentTable> {
   }
 
   @override
-  void didUpdateWidget(NewStudentTable oldWidget) {
+  void didUpdateWidget(SecondTable oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.studentData != widget.studentData) {
       _initializeSelectedRows();
@@ -116,7 +116,7 @@ class _NewStudentTableState extends State<NewStudentTable> {
                     // widget.onScheduleSelected(_selectedIds, _selectedDateTime!);
                     print('Scheduled IDs: $_selectedIds at $_selectedDateTime');
                     try {
-                      final response = await Apiservice.approveNew(_selectedIds,_selectedDateTime);
+                      final response = await Apiservice.approveSecond(_selectedIds,_selectedDateTime);
                       Toast.show(context, message: response['message'],backgroundColor: Colors.green);
                       widget.onFetchData();
                     } catch (e) {
@@ -151,9 +151,10 @@ class _NewStudentTableState extends State<NewStudentTable> {
               DataColumn(label: Text('Student ID')),
               DataColumn(label: Text('Name')),
               DataColumn(label: Text('Email')),
-              DataColumn(label: Text('Senior HighSchool')),
-              DataColumn(label: Text('School Type')),
-              DataColumn(label: Text('Year Graudated')),
+              DataColumn(label: Text('School Name')),
+              DataColumn(label: Text('Course Graduated')),
+              DataColumn(label: Text('Course Completer')),
+              DataColumn(label: Text('Year Graduated')),
               DataColumn(label: Text('Awards')),
               // DataColumn(label: Text('Actions')),
             ],
@@ -174,8 +175,9 @@ class _NewStudentTableState extends State<NewStudentTable> {
                   DataCell(Text(student['id'].toString())),
                   DataCell(Text('${student['firstName']} ${student['lastName']}')),
                   DataCell(Text(student['email'])),
-                  DataCell(Text(student['shs'])),
-                  DataCell(Text(student['schoolType'])),
+                  DataCell(Text(student['schoolGraduated'])),
+                  DataCell(Text(student['courseCompleted'])),
+                  DataCell(Text(student['courseCompleter'])),
                   DataCell(Text(student['yearGraduated'])),
                   DataCell(Text(student['awardsReceived'])),
                   // DataCell(

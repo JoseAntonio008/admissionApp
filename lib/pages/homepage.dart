@@ -2,6 +2,7 @@ import 'package:admission/pages/Quiz.dart';
 import 'package:admission/pages/admission.dart';
 import 'package:admission/pages/dashboard.dart';
 import 'package:admission/pages/schedule.dart';
+import 'package:admission/pages/testResult.dart';
 import 'package:admission/services/authService.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,6 +39,18 @@ class _HomeScreenState extends State<HomeScreen> {
         child: AdmissionState(),
       ),
     ),
+    Padding(
+      padding: const EdgeInsets.only(bottom: 0, left: 50, right: 10, top: 10),
+      child: Center(
+        child: Testresult(),
+      ),
+    ),
+    Padding(
+      padding: const EdgeInsets.only(bottom: 0, left: 100, right: 100, top: 10),
+      child: Center(
+        child: QuizComponent(),
+      ),
+    ),
   ];
   void _onItemSelected(int index) {
     setState(() {
@@ -70,10 +83,14 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(title: Text("")),
       drawer: Drawer(
+        
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             UserAccountsDrawerHeader(
+              decoration: BoxDecoration( // Add this
+                color: Colors.green[800], // Change to your desired color
+              ),
               accountName: Text(fullName,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               accountEmail: Text("User ID: $userID"),
