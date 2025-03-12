@@ -48,6 +48,24 @@ class Apiservice {
     }
   }
 
+  static Future<Map<String, dynamic>> updateChoice(int questionId, int choiceIndex, String newText, String action) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/questions/update-choice/$questionId');
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString("jwt_token");
+      final response = await http.put(url,
+          headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+          body: jsonEncode({'choiceIndex': choiceIndex, 'newText': newText, 'action': action}));
+      final Map<String, dynamic> message = jsonDecode(response.body);
+      if (response.statusCode != 200) {
+        return {'error': message['error']}; // Return error message in a map
+      }
+      return {'message': message['message']};
+    } catch (e) {
+      return {'error': e.toString()}; // Return exception as a string in a map
+    }
+  }
+
   static Future<dynamic> fetchTotalApplicants() async {
     try {
       final url = Uri.parse('$baseUrl/api/dashboard/totalApplicants');

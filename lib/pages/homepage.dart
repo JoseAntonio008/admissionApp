@@ -1,4 +1,5 @@
 import 'package:admission/pages/Quiz.dart';
+import 'package:admission/pages/QuizManagement.dart';
 import 'package:admission/pages/admission.dart';
 import 'package:admission/pages/dashboard.dart';
 import 'package:admission/pages/schedule.dart';
@@ -48,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Padding(
       padding: const EdgeInsets.only(bottom: 0, left: 100, right: 100, top: 10),
       child: Center(
-        child: QuizComponent(),
+        child: QuizManagement(),
       ),
     ),
   ];
@@ -130,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             ListTile(
               leading: Icon(Icons.add_to_photos_rounded),
-              title: Text('Manage Quiz'),
+              title: Text('Manage Exam'),
               onTap: () {
                 _onItemSelected(4);
               },

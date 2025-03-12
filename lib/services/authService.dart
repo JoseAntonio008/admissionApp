@@ -9,8 +9,17 @@ class AuthService {
 
     try {
       final jwt = JWT.decode(token);
+      final expirationDate = DateTime.fromMillisecondsSinceEpoch(jwt.payload['exp'] * 1000); // Convert exp to DateTime
+      final now = DateTime.now();
+
+      if (expirationDate.isBefore(now)) {
+        print("Token expired");
+        await prefs.remove("jwt_token");
+        return null;
+      }
+
       print(jwt.payload);
-      return jwt.payload; // This contains user details
+      return jwt.payload;
     } catch (e) {
       print("Invalid Token: $e");
       await prefs.remove("jwt_token");
@@ -18,7 +27,7 @@ class AuthService {
     }
   }
 
-  Future <void> logout() async {
+  Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove("jwt_token");
   }

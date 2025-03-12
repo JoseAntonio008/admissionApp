@@ -114,156 +114,163 @@ class _QuizComponentState extends State<QuizComponent> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Center(
-        child: Column(
-          children: [
-            ElevatedButton(
-              onPressed: addNewQuestion,
-              child: const Text("Add New Question"),
-            ),
-            for (int i = 0; i < quizData.length; i++) ...[
-              Card(
-                margin: const EdgeInsets.all(8.0),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: questionControllers[i],
-                              decoration: const InputDecoration(labelText: 'Question Title'),
-                              onChanged: (value) {
-                                setState(() {
-                                  quizData[i]['questionTitle'] = value;
-                                });
-                              },
-                            ),
-                          ),
-                          IconButton(
-                              icon: const Icon(Icons.add, color: Colors.green),
-                              onPressed: () => pickImage(questionIndex: i)),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => removeQuestion(i),
-                          ),
-                        ],
-                      ),
-                      if (quizData[i]['questionImage'] != null)
-                        Stack(
-                          children: [
-                            Image.network(
-                              quizData[i]['questionImage'],
-                              height: 100,
-                              fit: BoxFit.cover,
-                            ),
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: IconButton(
-                                icon:
-                                    const Icon(Icons.close, color: Colors.red),
-                                onPressed: () => removeQuestionImage(i),
-                              ),
-                            ),
-                          ],
-                        ),
-                      TextField(
-                        controller: categoryControllers[i],
-                        decoration: const InputDecoration(labelText: 'Category'),
-                        onChanged: (value) {
-                          setState(() {
-                            quizData[i]['category'] = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      for (int j = 0; j < quizData[i]['choices'].length; j++) ...[
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Center(
+          child: Column(
+            children: [
+              for (int i = 0; i < quizData.length; i++) ...[
+                Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: TextField(
-                                decoration: const InputDecoration(labelText: 'Choice'),
+                                controller: questionControllers[i],
+                                decoration:
+                                    const InputDecoration(labelText: 'Question Title'),
                                 onChanged: (value) {
                                   setState(() {
-                                    quizData[i]['choices'][j]['text'] = value;
+                                    quizData[i]['questionTitle'] = value;
                                   });
                                 },
                               ),
                             ),
-                            if (quizData[i]['choices'][j]['image'] != null)
-                              Stack(
-                                children: [
-                                  Image.network(
-                                    quizData[i]['choices'][j]['image'],
-                                    height: 100,
-                                    fit: BoxFit.cover,
-                                  ),
-                                  Positioned(
-                                    right: 0,
-                                    top: 0,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.close, color: Colors.red),
-                                      onPressed: () => removeChoiceImage(i, j),
-                                    ),
-                                  ),
-                                ],
-                              ),
                             IconButton(
-                              icon: const Icon(Icons.image),
-                              onPressed: () => pickImage(questionIndex: i, choiceIndex: j),
-                            ),
+                                icon: const Icon(Icons.add, color: Colors.green),
+                                onPressed: () => pickImage(questionIndex: i)),
                             IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () {
-                                setState(() {
-                                  quizData[i]['choices'].removeAt(j);
-                                });
-                              },
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => removeQuestion(i),
                             ),
                           ],
                         ),
-                      ],
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            quizData[i]['choices'].add({'text': '', 'image': null});
-                          });
-                        },
-                        child: const Text("Add Choice"),
-                      ),
-                      if (quizData[i]['choices'].isNotEmpty)
-                        DropdownButton<int>(
-                          value: quizData[i]['correctAnswer'],
-                          hint: const Text("Select Correct Answer"),
-                          items: List.generate(
-                            quizData[i]['choices'].length,
-                            (index) => DropdownMenuItem(
-                              value: index,
-                              child: Text('Choice ${index + 1}'),
-                            ),
+                        if (quizData[i]['questionImage'] != null)
+                          Stack(
+                            children: [
+                              Image.network(
+                                quizData[i]['questionImage'],
+                                height: 100,
+                                fit: BoxFit.cover,
+                              ),
+                              Positioned(
+                                right: 0,
+                                top: 0,
+                                child: IconButton(
+                                  icon:
+                                      const Icon(Icons.close, color: Colors.red),
+                                  onPressed: () => removeQuestionImage(i),
+                                ),
+                              ),
+                            ],
                           ),
+                        TextField(
+                          controller: categoryControllers[i],
+                          decoration: const InputDecoration(labelText: 'Category'),
                           onChanged: (value) {
                             setState(() {
-                              quizData[i]['correctAnswer'] = value!;
+                              quizData[i]['category'] = value;
                             });
                           },
                         ),
-                    ],
+                        const SizedBox(height: 10),
+                        for (int j = 0; j < quizData[i]['choices'].length; j++) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  decoration:
+                                      const InputDecoration(labelText: 'Choice'),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      quizData[i]['choices'][j]['text'] = value;
+                                    });
+                                  },
+                                ),
+                              ),
+                              if (quizData[i]['choices'][j]['image'] != null)
+                                Stack(
+                                  children: [
+                                    Image.network(
+                                      quizData[i]['choices'][j]['image'],
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      top: 0,
+                                      child: IconButton(
+                                        icon: const Icon(Icons.close,
+                                            color: Colors.red),
+                                        onPressed: () =>
+                                            removeChoiceImage(i, j),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              IconButton(
+                                icon: const Icon(Icons.image),
+                                onPressed: () =>
+                                    pickImage(questionIndex: i, choiceIndex: j),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete),
+                                onPressed: () {
+                                  setState(() {
+                                    quizData[i]['choices'].removeAt(j);
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              quizData[i]['choices'].add({'text': '', 'image': null});
+                            });
+                          },
+                          child: const Text("Add Choice"),
+                        ),
+                        if (quizData[i]['choices'].isNotEmpty)
+                          DropdownButton<int>(
+                            value: quizData[i]['correctAnswer'],
+                            hint: const Text("Select Correct Answer"),
+                            items: List.generate(
+                              quizData[i]['choices'].length,
+                              (index) => DropdownMenuItem(
+                                value: index,
+                                child: Text('Choice ${index + 1}'),
+                              ),
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                quizData[i]['correctAnswer'] = value!;
+                              });
+                            },
+                          ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              ],
+              if (isFormComplete())
+                ElevatedButton(
+                  onPressed: submitQuiz,
+                  child: const Text("Submit Quiz"),
+                ),
             ],
-            if (isFormComplete())
-              ElevatedButton(
-                onPressed: submitQuiz,
-                child: const Text("Submit Quiz"),
-              ),
-          ],
+          ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: addNewQuestion,
+        child: const Icon(Icons.add),
       ),
     );
   }
