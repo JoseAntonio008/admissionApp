@@ -1,3 +1,4 @@
+import 'package:admission/components/scheduleTable.dart';
 import 'package:admission/pages/Quiz.dart';
 import 'package:admission/pages/QuizManagement.dart';
 import 'package:admission/pages/admission.dart';
@@ -31,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Padding(
       padding: const EdgeInsets.only(bottom: 0, left: 50, right: 10, top: 10),
       child: Center(
-        child: Schedule(),
+        child: RecordsTable(),
       ),
     ),
     Padding(
@@ -84,12 +85,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(title: Text("")),
       drawer: Drawer(
-        
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             UserAccountsDrawerHeader(
-              decoration: BoxDecoration( // Add this
+              decoration: BoxDecoration(
+                // Add this
                 color: Colors.green[800], // Change to your desired color
               ),
               accountName: Text(fullName,

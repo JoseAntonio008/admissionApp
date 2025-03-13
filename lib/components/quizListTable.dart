@@ -3,6 +3,7 @@ import 'package:admission/components/Toast.dart';
 import 'package:admission/services/apiservice.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:cached_network_image/cached_network_image.dart';
 
 class QuestionTable extends StatefulWidget {
   @override
@@ -63,12 +64,14 @@ class _QuestionTableState extends State<QuestionTable> {
                       if (choice['image'] != null)
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0),
-                          child: Image.network(
-                            choice['image'],
+                          child: CachedNetworkImage(
+                            imageUrl: choice['image'],
                             width: 100,
                             height: 100,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Text("Image Failed"),
+                            placeholder: (context, url) =>
+                                CircularProgressIndicator(), // Loading indicator
+                            errorWidget: (context, url, error) => Center(
+                                child: Text("Image Failed")), // Error handling
                           ),
                         ),
                     ],
@@ -119,28 +122,42 @@ class _QuestionTableState extends State<QuestionTable> {
         return AlertDialog(
           title: Text('Add Choice'),
           content: TextField(
-              controller: textController,
-              decoration: InputDecoration(labelText: "Choice Text")),
+            controller: textController,
+            decoration: InputDecoration(labelText: "Choice Text"),
+          ),
           actions: <Widget>[
             TextButton(
-                child: Text('Cancel'),
-                onPressed: () => Navigator.of(context).pop()),
+              child: Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
             TextButton(
               child: Text('Add'),
               onPressed: () async {
-                final newText = textController.text;
-                final response = await http.post(
-                  Uri.parse(
-                      'http://localhost:5000/api/questions/$questionId/choices'),
-                  headers: {'Content-Type': 'application/json'},
-                  body: json.encode({'text': newText}),
+                Navigator.of(context).pop(); // Close the "Add Choice" dialog
+                final response = await Apiservice.updateChoice(
+                  questionId,
+                  0,
+                  textController.text,
+                  'add',
                 );
-                if (response.statusCode == 201) {
-                  _fetchQuestions();
-                  Navigator.of(context).pop();
+
+                if (response.containsKey('error')) {
+                  Toast.show(context,
+                      message: 'Error: ${response['error']}',
+                      backgroundColor: Colors.red);
+                  print('Error: ${response['error']}');
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to add choice.')));
+                  Toast.show(context,
+                      message: '${response['message']}',
+                      backgroundColor: Colors.green);
+                  print('Message: ${response['message']}');
+                  _fetchQuestions().then((_) {
+                    // Removed the unnecessary second pop() call.
+                    final updatedQuestion =
+                        _questions.firstWhere((q) => q['id'] == questionId);
+                    _showChoicesDialog(updatedQuestion['choices'], questionId,
+                        0, updatedQuestion);
+                  });
                 }
               },
             ),
@@ -168,18 +185,34 @@ class _QuestionTableState extends State<QuestionTable> {
             TextButton(
               child: Text('Save'),
               onPressed: () async {
-                final newText = textController.text;
-                final response = await http.put(
-                    Uri.parse(
-                        'http://localhost:5000/api/questions/$questionId/choices/$choiceIndex'),
-                    headers: {'Content-Type': 'application/json'},
-                    body: json.encode({'text': newText}));
-                if (response.statusCode == 200) {
-                  _fetchQuestions();
-                  Navigator.of(context).pop();
+                Navigator.of(context).pop();
+                final response = await Apiservice.updateChoice(
+                  questionId,
+                  choiceIndex,
+                  textController.text,
+                  'update',
+                );
+
+                if (response.containsKey('error')) {
+                  Toast.show(context,
+                      message: 'Error: ${response['error']}',
+                      backgroundColor: Colors.red);
+                  print('Error: ${response['error']}');
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to edit choice.')));
+                  Toast.show(context,
+                      message: '${response['message']}',
+                      backgroundColor: Colors.green);
+                  print('Message: ${response['message']}');
+                  _fetchQuestions().then((_) {
+                    // Close the old dialog first
+                    Navigator.of(context).pop(); // Close the old dialog
+
+                    // Reopen the dialog with updated choices
+                    final updatedQuestion =
+                        _questions.firstWhere((q) => q['id'] == questionId);
+                    _showChoicesDialog(updatedQuestion['choices'], questionId,
+                        choiceIndex, updatedQuestion);
+                  });
                 }
               },
             ),
@@ -190,56 +223,56 @@ class _QuestionTableState extends State<QuestionTable> {
   }
 
   void _deleteChoice(int questionId, int choiceIndex, dynamic question) async {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Confirm Delete Choice'),
-        content: Text('Are you sure you want to delete this choice?'),
-        actions: <Widget>[
-          TextButton(
-            child: Text('Cancel'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          TextButton(
-            child: Text('Delete'),
-            onPressed: () async {
-              Navigator.of(context).pop();
-              final response = await Apiservice.updateChoice(
-                questionId,
-                choiceIndex,
-                "hello",
-                'delete',
-              );
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Delete Choice'),
+          content: Text('Are you sure you want to delete this choice?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: Text('Delete'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                final response = await Apiservice.updateChoice(
+                  questionId,
+                  choiceIndex,
+                  "hello",
+                  'delete',
+                );
 
-              if (response.containsKey('error')) {
-                Toast.show(context,
-                    message: 'Error: ${response['error']}',
-                    backgroundColor: Colors.red);
-                print('Error: ${response['error']}');
-              } else {
-                Toast.show(context,
-                    message: '${response['message']}',
-                    backgroundColor: Colors.green);
-                print('Message: ${response['message']}');
-                _fetchQuestions().then((_) {
-                  // Close the old dialog first
-                  Navigator.of(context).pop(); // Close the old dialog
+                if (response.containsKey('error')) {
+                  Toast.show(context,
+                      message: 'Error: ${response['error']}',
+                      backgroundColor: Colors.red);
+                  print('Error: ${response['error']}');
+                } else {
+                  Toast.show(context,
+                      message: '${response['message']}',
+                      backgroundColor: Colors.green);
+                  print('Message: ${response['message']}');
+                  _fetchQuestions().then((_) {
+                    // Close the old dialog first
+                    Navigator.of(context).pop(); // Close the old dialog
 
-                  // Reopen the dialog with updated choices
-                  final updatedQuestion = _questions
-                      .firstWhere((q) => q['id'] == questionId);
-                  _showChoicesDialog(updatedQuestion['choices'], questionId,
-                      choiceIndex, updatedQuestion);
-                });
-              }
-            },
-          ),
-        ],
-      );
-    },
-  );
-}
+                    // Reopen the dialog with updated choices
+                    final updatedQuestion =
+                        _questions.firstWhere((q) => q['id'] == questionId);
+                    _showChoicesDialog(updatedQuestion['choices'], questionId,
+                        choiceIndex, updatedQuestion);
+                  });
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> _confirmDelete() async {
     showDialog(
