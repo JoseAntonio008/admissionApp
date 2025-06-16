@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:admission/components/Toast.dart';
 import 'package:admission/services/apiservice.dart';
 import 'package:flutter/material.dart';
-import 'dart:html' as html; // For web-specific file selection
+import 'package:file_picker/file_picker.dart'; // For cross-platform file selection
 
 class QuizComponent extends StatefulWidget {
   const QuizComponent({super.key});
@@ -15,6 +15,24 @@ class _QuizComponentState extends State<QuizComponent> {
   final List<TextEditingController> questionControllers = [];
   final List<TextEditingController> categoryControllers = [];
   final List<Map<String, dynamic>> quizData = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with one question when the component starts
+    addNewQuestion();
+  }
+
+  @override
+  void dispose() {
+    for (var controller in questionControllers) {
+      controller.dispose();
+    }
+    for (var controller in categoryControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   // Add a new question
   void addNewQuestion() {
@@ -34,37 +52,53 @@ class _QuizComponentState extends State<QuizComponent> {
 
   // Pick an image for a question or choice
   Future<void> pickImage({required int questionIndex, int? choiceIndex}) async {
-    final input = html.FileUploadInputElement()..accept = 'image/*';
-    input.click();
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
 
-    input.onChange.listen((e) async {
-      final files = input.files;
-      if (files?.isEmpty ?? true) return;
-      final file = files?.first;
+    if (result != null && result.files.single.bytes != null) {
+      final fileBytes = result.files.single.bytes!;
+      final base64String = base64Encode(fileBytes); // Convert to Base64
+      final fileExtension = result.files.single.extension;
+      final mimeType = _getMimeType(fileExtension); // Determine MIME type
 
-      if (file != null) {
-        final reader = html.FileReader();
-        reader.readAsArrayBuffer(file); // Read file as bytes
-        reader.onLoadEnd.listen((event) {
-          final fileBytes = reader.result as List<int>;
-          final base64String = base64Encode(fileBytes); // Convert to Base64
+      setState(() {
+        if (choiceIndex == null) {
+          quizData[questionIndex]['questionImage'] =
+              'data:$mimeType;base64,$base64String';
+        } else {
+          quizData[questionIndex]['choices'][choiceIndex]['image'] =
+              'data:$mimeType;base64,$base64String';
+        }
+      });
+    } else {
+      // User canceled the picker or no file selected
+      Toast.show(context, message: "No image selected.");
+    }
+  }
 
-          setState(() {
-            if (choiceIndex == null) {
-              quizData[questionIndex]['questionImage'] =
-                  'data:${file.type};base64,$base64String';
-            } else {
-              quizData[questionIndex]['choices'][choiceIndex]['image'] =
-                  'data:${file.type};base64,$base64String';
-            }
-          });
-        });
-      }
-    });
+  // Helper to determine MIME type based on file extension
+  String _getMimeType(String? extension) {
+    switch (extension?.toLowerCase()) {
+      case 'jpg':
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'png':
+        return 'image/png';
+      case 'gif':
+        return 'image/gif';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'application/octet-stream'; // Fallback
+    }
   }
 
   // Check if all fields are filled
   bool isFormComplete() {
+    if (quizData.isEmpty) return false;
+
     for (var question in quizData) {
       if (question['questionTitle'].trim().isEmpty ||
           question['category'].trim().isEmpty ||
@@ -76,12 +110,14 @@ class _QuizComponentState extends State<QuizComponent> {
         if (choice['text'].trim().isEmpty) return false;
       }
     }
-    return quizData.isNotEmpty;
+    return true;
   }
 
   // Remove a question
   void removeQuestion(int questionIndex) {
     setState(() {
+      questionControllers[questionIndex].dispose(); // Dispose controller
+      categoryControllers[questionIndex].dispose(); // Dispose controller
       quizData.removeAt(questionIndex);
       questionControllers.removeAt(questionIndex);
       categoryControllers.removeAt(questionIndex);
@@ -108,6 +144,9 @@ class _QuizComponentState extends State<QuizComponent> {
       return Toast.show(context, message: "Please fill in all fields.");
     }
 
+    // You might want to show a loading indicator here
+    Toast.show(context, message: "Submitting quiz...");
+
     final response = await Apiservice.createMultipleQuiz(quizData);
     Toast.show(context, message: response);
   }
@@ -132,8 +171,8 @@ class _QuizComponentState extends State<QuizComponent> {
                             Expanded(
                               child: TextField(
                                 controller: questionControllers[i],
-                                decoration:
-                                    const InputDecoration(labelText: 'Question Title'),
+                                decoration: const InputDecoration(
+                                    labelText: 'Question Title'),
                                 onChanged: (value) {
                                   setState(() {
                                     quizData[i]['questionTitle'] = value;
@@ -142,7 +181,8 @@ class _QuizComponentState extends State<QuizComponent> {
                               ),
                             ),
                             IconButton(
-                                icon: const Icon(Icons.add, color: Colors.green),
+                                icon:
+                                    const Icon(Icons.image, color: Colors.blue),
                                 onPressed: () => pickImage(questionIndex: i)),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
@@ -153,8 +193,9 @@ class _QuizComponentState extends State<QuizComponent> {
                         if (quizData[i]['questionImage'] != null)
                           Stack(
                             children: [
-                              Image.network(
-                                quizData[i]['questionImage'],
+                              Image.memory(
+                                base64Decode(
+                                    quizData[i]['questionImage'].split(',')[1]),
                                 height: 100,
                                 fit: BoxFit.cover,
                               ),
@@ -162,8 +203,8 @@ class _QuizComponentState extends State<QuizComponent> {
                                 right: 0,
                                 top: 0,
                                 child: IconButton(
-                                  icon:
-                                      const Icon(Icons.close, color: Colors.red),
+                                  icon: const Icon(Icons.close,
+                                      color: Colors.red),
                                   onPressed: () => removeQuestionImage(i),
                                 ),
                               ),
@@ -171,7 +212,8 @@ class _QuizComponentState extends State<QuizComponent> {
                           ),
                         TextField(
                           controller: categoryControllers[i],
-                          decoration: const InputDecoration(labelText: 'Category'),
+                          decoration:
+                              const InputDecoration(labelText: 'Category'),
                           onChanged: (value) {
                             setState(() {
                               quizData[i]['category'] = value;
@@ -179,25 +221,30 @@ class _QuizComponentState extends State<QuizComponent> {
                           },
                         ),
                         const SizedBox(height: 10),
-                        for (int j = 0; j < quizData[i]['choices'].length; j++) ...[
+                        for (int j = 0;
+                            j < quizData[i]['choices'].length;
+                            j++) ...[
                           Row(
                             children: [
                               Expanded(
                                 child: TextField(
-                                  decoration:
-                                      const InputDecoration(labelText: 'Choice'),
+                                  decoration: const InputDecoration(
+                                      labelText: 'Choice'),
                                   onChanged: (value) {
                                     setState(() {
                                       quizData[i]['choices'][j]['text'] = value;
                                     });
                                   },
+                                  // You might want to add a TextEditingController for choices as well
                                 ),
                               ),
                               if (quizData[i]['choices'][j]['image'] != null)
                                 Stack(
                                   children: [
-                                    Image.network(
-                                      quizData[i]['choices'][j]['image'],
+                                    Image.memory(
+                                      base64Decode(quizData[i]['choices'][j]
+                                              ['image']
+                                          .split(',')[1]),
                                       height: 100,
                                       fit: BoxFit.cover,
                                     ),
@@ -214,15 +261,27 @@ class _QuizComponentState extends State<QuizComponent> {
                                   ],
                                 ),
                               IconButton(
-                                icon: const Icon(Icons.image),
+                                icon:
+                                    const Icon(Icons.image, color: Colors.blue),
                                 onPressed: () =>
                                     pickImage(questionIndex: i, choiceIndex: j),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete),
+                                icon: const Icon(Icons.delete,
+                                    color: Colors.redAccent),
                                 onPressed: () {
                                   setState(() {
                                     quizData[i]['choices'].removeAt(j);
+                                    // If the removed choice was the correct answer, reset correctAnswer
+                                    if (quizData[i]['correctAnswer'] == j) {
+                                      quizData[i]['correctAnswer'] = null;
+                                    } else if (quizData[i]['correctAnswer'] !=
+                                            null &&
+                                        quizData[i]['correctAnswer']! > j) {
+                                      // Adjust correct answer index if it's after the removed choice
+                                      quizData[i]['correctAnswer'] =
+                                          quizData[i]['correctAnswer']! - 1;
+                                    }
                                   });
                                 },
                               ),
@@ -232,7 +291,8 @@ class _QuizComponentState extends State<QuizComponent> {
                         ElevatedButton(
                           onPressed: () {
                             setState(() {
-                              quizData[i]['choices'].add({'text': '', 'image': null});
+                              quizData[i]['choices']
+                                  .add({'text': '', 'image': null});
                             });
                           },
                           child: const Text("Add Choice"),
@@ -245,7 +305,8 @@ class _QuizComponentState extends State<QuizComponent> {
                               quizData[i]['choices'].length,
                               (index) => DropdownMenuItem(
                                 value: index,
-                                child: Text('Choice ${index + 1}'),
+                                child: Text(
+                                    'Choice ${index + 1}: ${quizData[i]['choices'][index]['text']}'), // Show choice text
                               ),
                             ),
                             onChanged: (value) {
@@ -259,11 +320,22 @@ class _QuizComponentState extends State<QuizComponent> {
                   ),
                 ),
               ],
-              if (isFormComplete())
-                ElevatedButton(
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton(
                   onPressed: submitQuiz,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isFormComplete()
+                        ? Theme.of(context).primaryColor
+                        : Colors.grey,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 15),
+                    textStyle: const TextStyle(fontSize: 18),
+                  ),
                   child: const Text("Submit Quiz"),
                 ),
+              ),
             ],
           ),
         ),

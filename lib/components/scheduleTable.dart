@@ -142,7 +142,8 @@ class _RecordsTableState extends State<RecordsTable> {
               children: [
                 DataTable(
                   columns: [
-                    DataColumn(label: Text("Select")),
+                    // Removed the DataColumn(label: Text("Select")) because DataTable
+                    // will automatically add a checkbox column if DataRows are selectable.
                     DataColumn(label: Text("DateTime")),
                     DataColumn(label: Text("Location")),
                     DataColumn(label: Text("Description")),
@@ -152,14 +153,13 @@ class _RecordsTableState extends State<RecordsTable> {
                       .map(
                         (record) => DataRow(
                           selected: selectedIds.contains(record['id']),
-                          onSelectChanged: (selected) =>
-                              toggleSelection(record['id']),
+                          onSelectChanged: (selected) {
+                            if (selected != null) {
+                              toggleSelection(record['id']);
+                            }
+                          },
                           cells: [
-                            DataCell(Checkbox(
-                              value: selectedIds.contains(record['id']),
-                              onChanged: (value) =>
-                                  toggleSelection(record['id']),
-                            )),
+                            // Removed the DataCell with the explicit Checkbox
                             DataCell(Text(record['dateTime'].toString())),
                             DataCell(Text(record['location'])),
                             DataCell(Text(record['description'])),
