@@ -80,6 +80,7 @@ class _AdmissionStateState extends State<AdmissionState>
     }
     // Implement delete API call here
   }
+
   void _deleteSelectedAdmission(List<int> ids) async {
     print('Delete IDs: $ids');
     try {
@@ -116,6 +117,22 @@ class _AdmissionStateState extends State<AdmissionState>
     print('Delete IDs: $ids');
     try {
       final response = await Apiservice.archiveSecond(ids);
+      print(response);
+      Toast.show(context,
+          message: response['message'], backgroundColor: Colors.green);
+      _fetchStudentData();
+    } catch (e) {
+      print(e.toString());
+      Toast.show(context, message: e.toString(), backgroundColor: Colors.red);
+      _fetchStudentData();
+    }
+    // Implement delete API call here
+  }
+
+  void _deleteSelectedSReturning(List<int> ids) async {
+    print('Delete IDs: $ids');
+    try {
+      final response = await Apiservice.archiveReturning(ids);
       print(response);
       Toast.show(context,
           message: response['message'], backgroundColor: Colors.green);
@@ -172,9 +189,9 @@ class _AdmissionStateState extends State<AdmissionState>
             availableScheduleDates: _availableScheduleDates,
             onFetchData: _fetchStudentData, // Pass the dates
           ),
-          RetruningTable(
+          ReturningTable(
             studentData: _ReturningStudentData,
-            onDeleteSelected: _deleteSelectedSecond,
+            onDeleteSelected: _deleteSelectedSReturning,
             onScheduleSelected: _scheduleSelected,
             availableScheduleDates: _availableScheduleDates,
             onFetchData: _fetchStudentData, // Pass the dates

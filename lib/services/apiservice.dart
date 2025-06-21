@@ -48,14 +48,22 @@ class Apiservice {
     }
   }
 
-  static Future<Map<String, dynamic>> updateChoice(int questionId, int choiceIndex, String newText, String action) async {
+  static Future<Map<String, dynamic>> updateChoice(
+      int questionId, int choiceIndex, String newText, String action) async {
     try {
       final url = Uri.parse('$baseUrl/api/questions/update-choice/$questionId');
       final prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString("jwt_token");
       final response = await http.put(url,
-          headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-          body: jsonEncode({'choiceIndex': choiceIndex, 'newText': newText, 'action': action}));
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token'
+          },
+          body: jsonEncode({
+            'choiceIndex': choiceIndex,
+            'newText': newText,
+            'action': action
+          }));
       final Map<String, dynamic> message = jsonDecode(response.body);
       if (response.statusCode != 200) {
         return {'error': message['error']}; // Return error message in a map
@@ -111,6 +119,7 @@ static Future<Map<String, dynamic>> updateCorrectAnswer(
       return e;
     }
   }
+
   static Future<dynamic> fetchTotalSchedules() async {
     try {
       final url = Uri.parse('$baseUrl/api/dashboard/totalSchedules');
@@ -302,6 +311,23 @@ static Future<Map<String, dynamic>> updateCorrectAnswer(
       return e.toString();
     }
   }
+
+  static Future<dynamic> archiveReturning(List<int> id) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/student/archive-returning');
+      final response = await http.post(url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'id': id}));
+      final Map<String, dynamic> message = jsonDecode(response.body);
+      if (response.statusCode != 200) {
+        throw Exception(message['error']);
+      }
+      return {'message': message['message']};
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
   static Future<dynamic> archiveAdmission(List<int> id) async {
     try {
       final url = Uri.parse('$baseUrl/api/student/archive-admission');
@@ -317,8 +343,6 @@ static Future<Map<String, dynamic>> updateCorrectAnswer(
       return e.toString();
     }
   }
-  
-
 
   static Future<dynamic> archiveTransferee(List<int> id) async {
     try {
@@ -384,6 +408,7 @@ static Future<Map<String, dynamic>> updateCorrectAnswer(
       return e.toString();
     }
   }
+
   static Future<dynamic> changeSchedule(
       List<int> id, DateTime? examSchedule) async {
     try {
@@ -416,7 +441,6 @@ static Future<Map<String, dynamic>> updateCorrectAnswer(
       return e.toString();
     }
   }
-
 
   static Future<dynamic> approveTransferee(
       List<int> id, DateTime? examSchedule) async {
