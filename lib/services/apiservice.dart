@@ -66,6 +66,26 @@ class Apiservice {
     }
   }
 
+static Future<Map<String, dynamic>> updateCorrectAnswer(
+      int questionId, int correctChoiceIndex) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString("jwt_token");
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/questions/$questionId/correctAnswer'),
+        headers: <String, String>{
+          'Content-Type': 'application/json','Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'correctAnswer': correctChoiceIndex,
+        }),
+      );
+      return json.decode(response.body);
+    } catch (e) {
+      return {'error': 'Failed to communicate with the server: $e'};
+    }
+  }
+  
   static Future<dynamic> fetchTotalApplicants() async {
     try {
       final url = Uri.parse('$baseUrl/api/dashboard/totalApplicants');

@@ -41,9 +41,9 @@ class _QuestionTableState extends State<QuestionTable> {
     }
   }
 
-  void _showChoicesDialog(List<dynamic> choices, int questionId,
-      int choiceIndex, dynamic question) {
-    // Add question parameter
+  void _showChoicesDialog(
+      List<dynamic> choices, int questionId, dynamic question) {
+    // Removed choiceIndex parameter from here
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -53,13 +53,18 @@ class _QuestionTableState extends State<QuestionTable> {
             child: Column(
               children: choices.map<Widget>((choice) {
                 final index = choices.indexOf(choice);
+                // Determine if this choice is the correct answer based on the question's 'correctAnswer' field
+                // Assuming 'correctAnswer' in your question data is the index of the correct choice
+                final isCorrectChoice = question['correctAnswer'] == index;
+
                 return ListTile(
                   title: Row(
                     children: [
                       Expanded(
                         child: ConstrainedBox(
-                            constraints: BoxConstraints(minWidth: 100),
-                            child: Text(choice['text'])),
+                          constraints: BoxConstraints(minWidth: 100),
+                          child: Text(choice['text']),
+                        ),
                       ),
                       if (choice['image'] != null)
                         Padding(
@@ -79,14 +84,29 @@ class _QuestionTableState extends State<QuestionTable> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Correct Answer Indicator
+                      if (isCorrectChoice)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Icon(Icons.check_circle, color: Colors.green),
+                        ),
+                      // Select as Correct Button
+                      IconButton(
+                        icon: Icon(Icons.star,
+                            color: isCorrectChoice ? Colors.amber : Colors.grey),
+                        onPressed: () {
+                          _selectCorrectChoice(questionId, index);
+                          Navigator.of(context).pop(); // Close dialog after selection
+                        },
+                      ),
                       IconButton(
                         icon: Icon(Icons.edit),
                         onPressed: () => _editChoice(questionId, index, choice),
                       ),
                       IconButton(
                         icon: Icon(Icons.delete),
-                        onPressed: () => _deleteChoice(
-                            questionId, index, question), //Pass question
+                        onPressed: () =>
+                            _deleteChoice(questionId, index, question),
                       ),
                     ],
                   ),
@@ -136,7 +156,7 @@ class _QuestionTableState extends State<QuestionTable> {
                 Navigator.of(context).pop(); // Close the "Add Choice" dialog
                 final response = await Apiservice.updateChoice(
                   questionId,
-                  0,
+                  0, // Assuming index doesn't matter for add, or you'll determine it on backend
                   textController.text,
                   'add',
                 );
@@ -151,13 +171,16 @@ class _QuestionTableState extends State<QuestionTable> {
                       message: '${response['message']}',
                       backgroundColor: Colors.green);
                   print('Message: ${response['message']}');
-                  _fetchQuestions().then((_) {
-                    // Removed the unnecessary second pop() call.
-                    final updatedQuestion =
-                        _questions.firstWhere((q) => q['id'] == questionId);
-                    _showChoicesDialog(updatedQuestion['choices'], questionId,
-                        0, updatedQuestion);
-                  });
+                  await _fetchQuestions(); // Refresh questions after adding
+                  // Reopen the choices dialog with updated data
+                  final updatedQuestion = _questions.firstWhere(
+                      (q) => q['id'] == questionId,
+                      orElse: () => null); // Use orElse for safety
+
+                  if (updatedQuestion != null) {
+                    _showChoicesDialog(
+                        updatedQuestion['choices'], questionId, updatedQuestion);
+                  }
                 }
               },
             ),
@@ -203,16 +226,16 @@ class _QuestionTableState extends State<QuestionTable> {
                       message: '${response['message']}',
                       backgroundColor: Colors.green);
                   print('Message: ${response['message']}');
-                  _fetchQuestions().then((_) {
-                    // Close the old dialog first
-                    Navigator.of(context).pop(); // Close the old dialog
+                  await _fetchQuestions(); // Refresh questions after editing
+                  // Reopen the dialog with updated choices
+                  final updatedQuestion = _questions.firstWhere(
+                      (q) => q['id'] == questionId,
+                      orElse: () => null); // Use orElse for safety
 
-                    // Reopen the dialog with updated choices
-                    final updatedQuestion =
-                        _questions.firstWhere((q) => q['id'] == questionId);
+                  if (updatedQuestion != null) {
                     _showChoicesDialog(updatedQuestion['choices'], questionId,
-                        choiceIndex, updatedQuestion);
-                  });
+                        updatedQuestion); // Pass updated question
+                  }
                 }
               },
             ),
@@ -241,7 +264,7 @@ class _QuestionTableState extends State<QuestionTable> {
                 final response = await Apiservice.updateChoice(
                   questionId,
                   choiceIndex,
-                  "hello",
+                  "hello", // This "hello" might not be needed for delete operation
                   'delete',
                 );
 
@@ -255,16 +278,16 @@ class _QuestionTableState extends State<QuestionTable> {
                       message: '${response['message']}',
                       backgroundColor: Colors.green);
                   print('Message: ${response['message']}');
-                  _fetchQuestions().then((_) {
-                    // Close the old dialog first
-                    Navigator.of(context).pop(); // Close the old dialog
+                  await _fetchQuestions(); // Refresh questions after deleting
+                  // Reopen the dialog with updated choices
+                  final updatedQuestion = _questions.firstWhere(
+                      (q) => q['id'] == questionId,
+                      orElse: () => null); // Use orElse for safety
 
-                    // Reopen the dialog with updated choices
-                    final updatedQuestion =
-                        _questions.firstWhere((q) => q['id'] == questionId);
+                  if (updatedQuestion != null) {
                     _showChoicesDialog(updatedQuestion['choices'], questionId,
-                        choiceIndex, updatedQuestion);
-                  });
+                        updatedQuestion); // Pass updated question
+                  }
                 }
               },
             ),
@@ -272,6 +295,34 @@ class _QuestionTableState extends State<QuestionTable> {
         );
       },
     );
+  }
+
+  // New function to handle selecting the correct choice
+  void _selectCorrectChoice(int questionId, int selectedChoiceIndex) async {
+    final response = await Apiservice.updateCorrectAnswer(
+      questionId,
+      selectedChoiceIndex,
+    );
+
+    if (response.containsKey('error')) {
+      Toast.show(context,
+          message: 'Error: ${response['error']}', backgroundColor: Colors.red);
+      print('Error selecting correct choice: ${response['error']}');
+    } else {
+      Toast.show(context,
+          message: '${response['message']}', backgroundColor: Colors.green);
+      print('Message: ${response['message']}');
+      await _fetchQuestions(); // Refresh questions to update UI
+      // Reopen the dialog with updated choices and correct answer indicator
+      final updatedQuestion = _questions.firstWhere(
+          (q) => q['id'] == questionId,
+          orElse: () => null);
+
+      if (updatedQuestion != null) {
+        _showChoicesDialog(
+            updatedQuestion['choices'], questionId, updatedQuestion);
+      }
+    }
   }
 
   Future<void> _confirmDelete() async {
@@ -337,7 +388,6 @@ class _QuestionTableState extends State<QuestionTable> {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: DataTable(
-                      // ... (Your DataTable remains the same)
                       columns: [
                         DataColumn(label: Text('Select')),
                         DataColumn(label: Text('ID')),
@@ -359,7 +409,8 @@ class _QuestionTableState extends State<QuestionTable> {
                                   if (value != null && value) {
                                     _selectedQuestionIds.add(question['id']);
                                   } else {
-                                    _selectedQuestionIds.remove(question['id']);
+                                    _selectedQuestionIds
+                                        .remove(question['id']);
                                   }
                                 });
                               },
@@ -370,14 +421,13 @@ class _QuestionTableState extends State<QuestionTable> {
                               onPressed: () => _showChoicesDialog(
                                   question['choices'],
                                   question['id'],
-                                  0,
-                                  question), //Pass question.
+                                  question), // Pass question without choiceIndex
                               child: Text('Show Choices'),
                             )),
                             DataCell(Text(question['author'])),
                             DataCell(Text(question['category'])),
                             DataCell(Text(
-                                _indexToLetter(question['correctAnswer']))),
+                                _indexToLetter(question['correctAnswer'] ?? -1))), // Handle null correctAnswer
                           ],
                         );
                       }).toList(),
